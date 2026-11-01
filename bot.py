@@ -208,7 +208,9 @@ def main_finder_keyboard(user_id: int = 0):
                 "request_users": {
                     "request_id": 1,
                     "user_is_bot": False,
-                    "max_quantity": 5
+                    "max_quantity": 5,
+                    "request_name": True,
+                    "request_username": True
                 },
                 "style": "primary"
             }
@@ -220,7 +222,9 @@ def main_finder_keyboard(user_id: int = 0):
                 "request_chat": {
                     "request_id": 2,
                     "chat_is_channel": False,
-                    "chat_is_public": True
+                    "chat_is_public": True,
+                    "request_title": True,
+                    "request_username": True
                 },
                 "style": "success"
             },
@@ -229,7 +233,8 @@ def main_finder_keyboard(user_id: int = 0):
                 "request_chat": {
                     "request_id": 3,
                     "chat_is_channel": False,
-                    "chat_is_public": False
+                    "chat_is_public": False,
+                    "request_title": True
                 },
                 "style": "danger"
             }
@@ -241,7 +246,9 @@ def main_finder_keyboard(user_id: int = 0):
                 "request_chat": {
                     "request_id": 4,
                     "chat_is_channel": True,
-                    "chat_is_public": True
+                    "chat_is_public": True,
+                    "request_title": True,
+                    "request_username": True
                 },
                 "style": "success"
             },
@@ -250,7 +257,8 @@ def main_finder_keyboard(user_id: int = 0):
                 "request_chat": {
                     "request_id": 5,
                     "chat_is_channel": True,
-                    "chat_is_public": False
+                    "chat_is_public": False,
+                    "request_title": True
                 },
                 "style": "danger"
             }
@@ -262,7 +270,9 @@ def main_finder_keyboard(user_id: int = 0):
                 "request_users": {
                     "request_id": 6,
                     "user_is_bot": True,
-                    "max_quantity": 5
+                    "max_quantity": 5,
+                    "request_name": True,
+                    "request_username": True
                 },
                 "style": "primary"
             },
@@ -271,7 +281,9 @@ def main_finder_keyboard(user_id: int = 0):
                 "request_users": {
                     "request_id": 7,
                     "user_is_premium": True,
-                    "max_quantity": 5
+                    "max_quantity": 5,
+                    "request_name": True,
+                    "request_username": True
                 },
                 "style": "success"
             }
@@ -417,35 +429,37 @@ def handle_message(bot: TelegramBot, msg: Dict, bot_username: str):
         users_list = shared.get("users", [])
 
         # Label based on request_id
-        type_labels = {
-            1: "👤 ব্যবহারকারী (User)",
-            6: "🤖 টেলিগ্রাম বট (Bot)",
-            7: "⭐ টেলিগ্রাম প্রিমিয়াম ইউজার (Premium)"
+        card_titles = {
+            1: "ইউজার তথ্য 👤",
+            6: "বট তথ্য 🤖",
+            7: "প্রিমিয়াম ইউজার তথ্য ⭐"
         }
-        title_label = type_labels.get(req_id, "👤 শেয়ারকৃত ইউজার")
+        c_title_label = card_titles.get(req_id, "ইউজার তথ্য 👤")
+        is_premium_req = (req_id == 7)
 
         increment_search_count(user_id)
 
-        response_text = (
-            "╭━━━━━━━━━━━━━━━━━━━━━╮\n"
-            f"   ⚡ <b>{title_label}</b>\n"
-            "╰━━━━━━━━━━━━━━━━━━━━━╯\n"
-        )
-        for idx, u in enumerate(users_list, 1):
+        for u in users_list:
             s_uid = u.get("user_id")
             s_first = u.get("first_name", "")
             s_last = u.get("last_name", "")
-            s_full = f"{s_first} {s_last}".strip()
             s_uname = u.get("username", "")
 
-            response_text += f"\n🏷️ <b>নাম:</b> {s_full if s_full else 'N/A'}\n"
-            response_text += f"👤 <b>ইউজারনেম:</b> @{s_uname if s_uname else 'নেই'}\n"
-            response_text += f"🔢 <b>ইউনিক আইডি:</b> <code>{s_uid}</code>\n"
-            response_text += f"🔗 <b>ডিরেক্ট লিংক:</b> <a href=\"tg://user?id={s_uid}\">প্রোফাইল দেখুন</a>\n"
-            response_text += "────────────────────"
+            prem_str = "✅ হ্যাঁ" if is_premium_req else "❌ না"
+            profile_url = f"https://t.me/{s_uname}" if s_uname else f"tg://user?id={s_uid}"
 
-        response_text += "\n💡 <i>আইডি নম্বরের ওপর ট্যাপ করলেই স্বয়ংক্রিয়ভাবে কপি হয়ে যাবে!</i>"
-        bot.send_message(chat_id, response_text, reply_markup=main_finder_keyboard(user_id))
+            card = (
+                "┏─━─━─━─━─━─━─━─━─━─━─━─━─━─┓\n"
+                f"  <b>{c_title_label}</b>\n"
+                "┗─━─━─━─━─━─━─━─━─━─━─━─━─━─┛\n"
+                f"  📛 <b>নাম ➔</b> {s_first if s_first else 'N/A'}\n"
+                f"  📇 <b>পদবি ➔</b> {s_last if s_last else 'N/A'}\n"
+                f"  🔗 <b>ইউজারনেম ➔</b> @{s_uname if s_uname else 'N/A'}\n"
+                f"  🆔 <b>ইউজার আইডি ➔</b> <code>{s_uid}</code>\n"
+                f"  💎 <b>প্রিমিয়াম ➔</b> {prem_str}\n"
+                f"  🌐 <b>প্রোফাইল লিংক ➔</b> {profile_url}"
+            )
+            bot.send_message(chat_id, card, reply_markup=main_finder_keyboard(user_id))
         return
 
     # ==================== HANDLE CHAT SHARED (Group/Channel Picked) ====================
@@ -458,12 +472,12 @@ def handle_message(bot: TelegramBot, msg: Dict, bot_username: str):
         c_uname = shared.get("username", "")
 
         chat_labels = {
-            2: "🌐 পাবলিক গ্রুপ (Public Group)",
-            3: "🔒 প্রাইভেট গ্রুপ (Private Group)",
-            4: "🌐 পাবলিক চ্যানেল (Public Channel)",
-            5: "🔒 প্রাইভেট চ্যানেল (Private Channel)"
+            2: "পাবলিক গ্রুপ তথ্য 👥",
+            3: "প্রাইভেট গ্রুপ তথ্য 👥",
+            4: "পাবলিক চ্যানেল তথ্য 📢",
+            5: "প্রাইভেট চ্যানেল তথ্য 📢"
         }
-        chat_type_str = chat_labels.get(req_id, "📁 শেয়ারকৃত চ্যাট")
+        chat_type_str = chat_labels.get(req_id, "চ্যাট তথ্য 📁")
 
         # Telegram channels & supergroups use -100 prefix
         formatted_id = c_id
@@ -472,21 +486,19 @@ def handle_message(bot: TelegramBot, msg: Dict, bot_username: str):
 
         increment_search_count(user_id)
 
-        response_text = (
-            "╭━━━━━━━━━━━━━━━━━━━━━╮\n"
-            f"   📢 <b>{chat_type_str}</b>\n"
-            "╰━━━━━━━━━━━━━━━━━━━━━╯\n\n"
-            f"🏷️ <b>শিরোনাম:</b> {c_title if c_title else 'N/A'}\n"
-            f"🆔 <b>চ্যাট / চ্যানেল আইডি:</b> <code>{formatted_id}</code>\n"
-        )
-        if c_uname:
-            response_text += f"🔗 <b>পাবলিক লিংক:</b> https://t.me/{c_uname}\n"
+        link_str = f"https://t.me/{c_uname}" if c_uname else "N/A"
+        uname_str = f"@{c_uname}" if c_uname else "N/A"
 
-        response_text += (
-            "━━━━━━━━━━━━━━━━━━━━\n"
-            "💡 <i>আইডি নম্বরে ট্যাপ করে সরাসরি কপি করে যেকোনো বটে ব্যবহার করতে পারেন।</i>"
+        card = (
+            "┏─━─━─━─━─━─━─━─━─━─━─━─━─━─┓\n"
+            f"  <b>{chat_type_str}</b>\n"
+            "┗─━─━─━─━─━─━─━─━─━─━─━─━─━─┛\n"
+            f"  📛 <b>টাইটেল ➔</b> {c_title if c_title else 'N/A'}\n"
+            f"  🔗 <b>ইউজারনেম ➔</b> {uname_str}\n"
+            f"  🆔 <b>চ্যাট আইডি ➔</b> <code>{formatted_id}</code>\n"
+            f"  🌐 <b>লিংক ➔</b> {link_str}"
         )
-        bot.send_message(chat_id, response_text, reply_markup=main_finder_keyboard(user_id))
+        bot.send_message(chat_id, card, reply_markup=main_finder_keyboard(user_id))
         return
 
     # ==================== HANDLE FORWARDED MESSAGES ====================
@@ -586,16 +598,17 @@ def handle_message(bot: TelegramBot, msg: Dict, bot_username: str):
         conn.close()
 
         me_card = (
-            "╭━━━━━━━━━━━━━━━━━━━━━╮\n"
-            "   👤 <b>আপনার প্রোফাইল ও আইডি</b>\n"
-            "╰━━━━━━━━━━━━━━━━━━━━━╯\n\n"
-            f"🔢 <b>ইউজার আইডি:</b> <code>{user_id}</code> <i>(ট্যাপ করে কপি করুন)</i>\n"
-            f"🏷️ <b>নাম:</b> {first_name}\n"
-            f"👤 <b>ইউজারনেম:</b> @{username if username else 'নেই'}\n"
-            f"🔍 <b>মোট সার্চ করেছেন:</b> {user_searches} বার\n"
-            f"💬 <b>কারেন্ট চ্যাট আইডি:</b> <code>{chat_id}</code>\n"
+            "┏─━─━─━─━─━─━─━─━─━─━─━─━─━─┓\n"
+            "  <b>USER INFO 👤</b>\n"
+            "┗─━─━─━─━─━─━─━─━─━─━─━─━─━─┛\n"
+            f"  📛 <b>First Name:</b> {first_name}\n"
+            f"  📇 <b>Last Name:</b> {msg['from'].get('last_name', 'N/A')}\n"
+            f"  🆔 <b>User ID:</b> <code>{user_id}</code>\n"
+            f"  🔗 <b>Username:</b> @{username if username else 'N/A'}\n"
+            f"  💎 <b>Premium:</b> {'✅' if msg['from'].get('is_premium') else '❌'}\n"
+            f"  🌐 <b>Profile:</b> t.me/{username if username else user_id}\n"
             "━━━━━━━━━━━━━━━━━━━━\n"
-            "💡 <i>বট বানাতে ADMIN_ID হিসেবে উপরের আইডিটি ব্যবহার করুন।</i>"
+            f"🔍 <b>মোট সার্চ করেছেন:</b> {user_searches} বার"
         )
         bot.send_message(chat_id, me_card, reply_markup=main_finder_keyboard(user_id))
 
